@@ -2,7 +2,7 @@ import Component from '../Component.js';
 
 class TestComponent extends Component {
   constructor() {
-    super();
+    super('test-component');
   }
 
   onLoad() {

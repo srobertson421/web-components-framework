@@ -8,7 +8,11 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <vgsc-nav></vgsc-nav>
+  <vgsc-nav state="/state/ui.js"></vgsc-nav>
+  <vgsc-router state="/state/ui.js">
+    <vgsc-home-view path="/"></vgsc-home-view>
+    <vgsc-about-view path="/about"></vgsc-about-view>
+  </vgsc-router>
   <script type="module" src="./app.js"></script>
 </body>
 </html>

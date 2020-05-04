@@ -1,20 +1,54 @@
 class Component extends HTMLElement {
-  constructor(open) {
+  constructor(componentName, open) {
     super();
+
+    if(!componentName) {
+      throw new Error('Missing component name!');
+    }
 
     if(!open) {
       this.root = this.attachShadow({ mode: 'open' });
     } else {
       this.root = this;
     }
-
+    
+    this.hasLoaded = false;
     this.connectedState = {};
     this.unsubs = {};
+    this.templateId = `${componentName}-template`;
+    this.templateEl = document.querySelector(`#${this.templateId}`);
     this.styleEl = document.createElement('style');
-    this.templateEl = document.createElement('template');
   }
 
+  initTemplateTag() {
+    if(!this.templateEl) {
+      this.templateEl = document.createElement('template');
+      this.templateEl.id = `${this.templateId}`;
+      document.body.appendChild(this.templateEl);
+    }
+
+    const template = this.template();
+    if(typeof template === 'string') {
+      this.templateEl.innerHTML = template;
+    } else if(template instanceof Node) {
+      this.templateEl.appendChild(template);
+    }
+
+    this.root.appendChild(this.templateEl.content.cloneNode(true));
+  }
+
+  styles() {
+    return ``;
+  }
+
+  template() {
+    return ``;
+  }
+
+  beforeLoad() {}
+
   connectedCallback() {
+    this.beforeLoad();
     const statePath = this.getAttribute('state');
     if(statePath) {
       const splitPath = statePath.split(',');
@@ -30,6 +64,7 @@ class Component extends HTMLElement {
             });
           });
 
+          this.initTemplateTag();
           this.render();
         })
         .catch(err => {
@@ -37,30 +72,31 @@ class Component extends HTMLElement {
         });
       }
     } else {
+      this.initTemplateTag();
       this.render();
     }
   }
 
-  styles() {
-    return ``;
-  }
+  render() {
+    const boundEls = this.root.querySelectorAll('[state]');
+    boundEls.forEach(node => {
+      const state = this.connectedState[node.getAttribute('state')];
+      if(state) {
+        if(typeof state === 'object' && state.hasOwnProperty('__value')) {
+          node.innerText = state.value;
+        } else {
+          node.innerText = state;
+        }
+      }
+    });
 
-  template() {
-    return ``;
+    if(!this.hasLoaded) {
+      this.onLoad();
+      this.hasLoaded = true;
+    }
   }
 
   onLoad() {}
-
-  onUnload() {}
-
-  render() {
-    this.root.innerHTML = '';
-    this.templateEl.innerHTML = this.template();
-    this.styleEl.innerText = this.styles();
-    this.root.appendChild(this.templateEl.content.cloneNode(true));
-    this.root.appendChild(this.styleEl);
-    this.onLoad();
-  }
 
   disconnectedCallback() {
     Object.keys(this.unsubs).forEach(key => {
@@ -69,6 +105,8 @@ class Component extends HTMLElement {
 
     this.onUnload();
   }
+
+  onUnload() {}
 }
 
 export default Component;
